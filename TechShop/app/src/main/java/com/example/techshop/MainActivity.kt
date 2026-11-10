@@ -36,7 +36,21 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Surface
+
+import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.clickable
+
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material3.IconButton
+import androidx.compose.ui.draw.rotate
 
 
 
@@ -52,7 +66,7 @@ class MainActivity : ComponentActivity() {
         )
         setContent {
             TechShopTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                Scaffold(topBar = { TechShopTopAppBar() }) { innerPadding ->
                     CatalogoDeProdutos(
                         produtos = produtos,
                         modifier = Modifier.padding(innerPadding)
@@ -75,9 +89,18 @@ data class Produto(
 
 @Composable
 fun ProdutoCard(produto: Produto, modifier: Modifier = Modifier) {
-    Card(modifier = modifier.fillMaxWidth()) {
+    var expandido by remember { mutableStateOf(false) }
+    Card(modifier = modifier
+        .fillMaxWidth()
+        .animateContentSize(
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessLow
+            )
+        )
+    ) {
         Row(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(16.dp).clickable{ expandido = !expandido },
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
@@ -96,7 +119,30 @@ fun ProdutoCard(produto: Produto, modifier: Modifier = Modifier) {
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Bold
             )
+
+            val rotacao by animateFloatAsState(
+                targetValue = if (expandido) 180f else 0f,
+                label = "rotacaoSeta"
+            )
+
+            IconButton(onClick = { expandido = !expandido }) {
+                Icon(
+                    imageVector = Icons.Default.ExpandMore,
+                    contentDescription = if (expandido) "Recolher detalhes" else "Expandir detalhes",
+                    modifier = Modifier.rotate(rotacao)
+                )
+            }
+
         }
+
+        if (expandido) {
+            Text(
+                text = "Categoria: ${produto.categoria}. Disponível para entrega imediata.",
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
+            )
+        }
+
     }
 }
 
@@ -139,6 +185,31 @@ fun CatalogoDeProdutos(produtos: List<Produto>, modifier: Modifier = Modifier) {
 
     }
 }
+
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TechShopTopAppBar(modifier: Modifier = Modifier) {
+    CenterAlignedTopAppBar(
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(imageVector = Icons.Default.ShoppingCart, contentDescription = null)
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("TechShop", style = MaterialTheme.typography.titleLarge)
+            }
+        },
+        expandedHeight = 48.dp,
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.primary,
+            titleContentColor = MaterialTheme.colorScheme.onPrimary,
+            navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
+            actionIconContentColor = MaterialTheme.colorScheme.onPrimary
+        ),
+        modifier = modifier
+    )
+}
+
 
 
 
